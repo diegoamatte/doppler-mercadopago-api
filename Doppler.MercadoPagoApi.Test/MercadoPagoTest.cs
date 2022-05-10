@@ -1,5 +1,5 @@
 using Doppler.MercadoPagoApi.Models;
-using Doppler.MercadoPagoApi.Services;
+using MercadoPago.Client;
 using MercadoPago.Client.Customer;
 using MercadoPago.Error;
 using MercadoPago.Resource.Customer;
@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -22,7 +23,7 @@ namespace Doppler.MercadoPagoApi
         const string TOKEN_ACCOUNT_123_TEST1_AT_TEST_DOT_COM_EXPIRE_20330518 = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOjEyMywidW5pcXVlX25hbWUiOiJ0ZXN0MUB0ZXN0LmNvbSIsInJvbGUiOiJVU0VSIiwiZXhwIjoyMDAwMDAwMDAwfQ.E3RHjKx9p0a-64RN2YPtlEMysGM45QBO9eATLBhtP4tUQNZnkraUr56hAWA-FuGmhiuMptnKNk_dU3VnbyL6SbHrMWUbquxWjyoqsd7stFs1K_nW6XIzsTjh8Bg6hB5hmsSV-M5_hPS24JwJaCdMQeWrh6cIEp2Sjft7I1V4HQrgzrkMh15sDFAw3i1_ZZasQsDYKyYbO9Jp7lx42ognPrz_KuvPzLjEXvBBNTFsVXUE-ur5adLNMvt-uXzcJ1rcwhjHWItUf5YvgRQbbBnd9f-LsJIhfkDgCJcvZmGDZrtlCKaU1UjHv5c3faZED-cjL59MbibofhPjv87MK8hhdg";
 
         private WebApplicationFactory<Startup> _factory;
-        private Mock<IMercadoPagoService> _mercadoPagoService;
+        private Mock<CustomerClient> _customerClient;
         private readonly string _testEmail;
         private readonly string _validId;
         private readonly string _customerEndpoint;
@@ -32,7 +33,7 @@ namespace Doppler.MercadoPagoApi
         {
             _factory = factory;
 
-            _mercadoPagoService = new Mock<IMercadoPagoService>();
+            _customerClient = new Mock<CustomerClient>();
             _testEmail = "test1@test.com";
             _validId = "1119277628-Ovsq6Ydl0FBDfe";
             _customerEndpoint = $"/accounts/{_testEmail}/customer";
@@ -40,7 +41,7 @@ namespace Doppler.MercadoPagoApi
             {
                 builder.ConfigureTestServices(services =>
                 {
-                    services.AddSingleton(_mercadoPagoService.Object);
+                    services.AddSingleton(_customerClient.Object);
                 });
             }).CreateClient(new WebApplicationFactoryClientOptions());
         }
@@ -51,7 +52,7 @@ namespace Doppler.MercadoPagoApi
             // Arrange
             var validCustomerDto = GetValidCustomerDto();
 
-            _mercadoPagoService.Setup(mps => mps.CreateCustomerAsync(It.IsAny<CustomerRequest>()))
+            _customerClient.Setup(cc => cc.CreateAsync(It.IsAny<CustomerRequest>(), It.IsAny<RequestOptions>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(GetValidCustomer());
 
             var request = new HttpRequestMessage(HttpMethod.Post, _customerEndpoint)
@@ -77,7 +78,7 @@ namespace Doppler.MercadoPagoApi
             var mpresponse = new MercadoPago.Http.MercadoPagoResponse(400, new Dictionary<string, string>(), "Client already exists");
             var mpException = new MercadoPagoApiException("Error response from SDK", mpresponse);
 
-            _mercadoPagoService.Setup(mps => mps.CreateCustomerAsync(It.IsAny<CustomerRequest>()))
+            _customerClient.Setup(cc => cc.CreateAsync(It.IsAny<CustomerRequest>(), It.IsAny<RequestOptions>(), It.IsAny<CancellationToken>()))
                 .ThrowsAsync(mpException);
 
             var request = new HttpRequestMessage(HttpMethod.Post, _customerEndpoint)

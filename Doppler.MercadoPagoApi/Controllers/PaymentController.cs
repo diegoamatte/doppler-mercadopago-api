@@ -1,11 +1,9 @@
 using Doppler.MercadoPagoApi.DopplerSecurity;
 using Doppler.MercadoPagoApi.Models;
-using Doppler.MercadoPagoApi.Services;
 using MercadoPago.Client.Customer;
 using MercadoPago.Error;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System;
 using System.Threading.Tasks;
 
 namespace Doppler.MercadoPagoApi.Controllers
@@ -14,11 +12,11 @@ namespace Doppler.MercadoPagoApi.Controllers
     [ApiController]
     public class PaymentController : Controller
     {
-        private readonly IMercadoPagoService _mercadoPagoService;
+        private readonly CustomerClient _customerClient;
 
-        public PaymentController(IMercadoPagoService mercadoPagoService)
+        public PaymentController(CustomerClient customerClient)
         {
-            _mercadoPagoService = mercadoPagoService;
+            _customerClient = customerClient;
         }
 
         [Authorize(Policies.OWN_RESOURCE_OR_SUPERUSER)]
@@ -33,7 +31,7 @@ namespace Doppler.MercadoPagoApi.Controllers
             };
             try
             {
-                var savedCustomer = await _mercadoPagoService.CreateCustomerAsync(customerRequest);
+                var savedCustomer = await _customerClient.CreateAsync(customerRequest);
                 return Ok(new { CustomerId = savedCustomer.Id });
             }
             catch (MercadoPagoApiException exception)
