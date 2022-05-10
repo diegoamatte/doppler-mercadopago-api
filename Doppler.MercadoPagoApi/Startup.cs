@@ -1,12 +1,12 @@
 using Hellang.Middleware.ProblemDetails;
+using MercadoPago.Client.Customer;
+using MercadoPago.Config;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi.Models;
 using System;
-using Hellang.Middleware.ProblemDetails;
-using MercadoPago.Config;
 
 namespace Doppler.MercadoPagoApi
 {
@@ -57,6 +57,7 @@ namespace Doppler.MercadoPagoApi
                 };
             });
             MercadoPagoConfig.AccessToken = Configuration["MercadoPago:AccessToken"];
+            services.AddSingleton<CustomerClient>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
